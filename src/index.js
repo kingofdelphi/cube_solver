@@ -18,7 +18,7 @@ const cube = new three.Mesh(geometry, material);
 cube.position.y = r * 0.5;
 scene.add(cube);
 
-const size = 4;
+const size = 8;
 
 const center = r * (size - 1) / 2;
 const light = new three.PointLight(0xffffff, 1);
@@ -37,49 +37,91 @@ for (let i = 0; i < size; i += 1) {
 	}
 }
 
+const player = { x: 0, z: 0 };
+
 const vector = new three.Vector3(0, 0, -1);
 
 const axis = new three.Vector3(1, 0, 0);
 const angle = -Math.PI / 4;
 
 vector.applyAxisAngle(axis, angle);
-console.log(vector);
 
+//slanted top view
 camera.position.set(center, 3, 1.5);        
 camera.up = new three.Vector3(1,0,0).cross(vector);
 camera.lookAt(vector.add(camera.position));
 
-let dest_zrot = 0;
-let dest_xrot = 0;
-let cur_zrot = 0;
-let dest_x = 0;
-let dest_z = 0;
+//front view
+//camera.position.set(center, 1, 2.5);        
+
+function rotateAroundWorldAxis(object, axis, radians, dx, dz = 0) {
+    const t = new three.Matrix4();
+	t.makeTranslation(dx, 0, dz);
+	object.applyMatrix(t);
+    const rotWorldMatrix = new three.Matrix4();
+    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+	object.applyMatrix(rotWorldMatrix);
+	t.makeTranslation(-dx, 0, -dz);
+	object.applyMatrix(t);
+}
+
+const rotation = (dir, type) => {
+	const dx = type === 'z' ? r / 2 - player.x * r + (dir === 1 ? 0 : -r) : 0;
+	const dz = type === 'x' ? -r / 2 + player.z * r + (dir === 1 ? 0 : r) : 0;
+	return { type, angleLeft: dir * Math.PI / 2, dx, dz };
+};
+
+let rot;
+
 function render() {
 	requestAnimationFrame(render);
 	if (keys['a']) {
-		keys['a'] = false;
-		dest_zrot += Math.PI / 2;
-		dest_x = Math.max(0, dest_x - 1);
+		if (!rot && player.x > 0) {
+			keys['a'] = false;
+			rot = rotation(1, 'z');
+			player.x = Math.max(0, player.x - 1);
+		}
 	}
 	if (keys['d']) {
-		keys['d'] = false;
-		dest_zrot -= Math.PI / 2;
-		dest_x = Math.min(size - 1, dest_x + 1);
+		if (!rot && player.x < size - 1) {
+			keys['d'] = false;
+			rot = rotation(-1, 'z');
+			player.x = Math.min(size - 1, player.x + 1);
+		}
 	}
 	if (keys['s']) {
-		keys['s'] = false;
-		dest_xrot += Math.PI / 2;
-		dest_z = Math.min(0, dest_z + 1);
+		if (!rot && player.z > 0) {
+			keys['s'] = false;
+			rot = rotation(1, 'x');
+			player.z = Math.max(0, player.z - 1);
+		}
 	}
 	if (keys['w']) {
-		keys['w'] = false;
-		dest_xrot -= Math.PI / 2;
-		dest_z = Math.max(-(size - 1), dest_z - 1);
+		if (!rot && player.z < size - 1) {
+			keys['w'] = false;
+			rot = rotation(-1, 'x');
+			player.z = Math.min(size - 1, player.z + 1);
+		}
 	}
-	cube.rotation.z += (dest_zrot - cube.rotation.z) / 8;
-	cube.rotation.x += (dest_xrot - cube.rotation.x) / 8;
-	cube.position.x += (dest_x * r - cube.position.x) / 8;
-	cube.position.z += (dest_z * r - cube.position.z) / 8;
+	let factor = 1 / 6;
+	if (rot) {
+		if (rot.type === 'z') {
+			if (keys['a'] && rot.angleLeft > 0) factor = 1 / 2; 
+			if (keys['d'] && rot.angleLeft < 0) factor = 1 / 2; 
+		}
+		if (rot.type === 'x') {
+			if (keys['s'] && rot.angleLeft > 0) factor = 1 / 2; 
+			if (keys['w'] && rot.angleLeft < 0) factor = 1 / 2; 
+		}
+		const f = rot.angleLeft * factor;
+		const axis = rot.type === 'z' ? new three.Vector3(0, 0, 1) : new three.Vector3(1, 0, 0);
+		rotateAroundWorldAxis(cube, axis, f, rot.dx, rot.dz);
+		rot.angleLeft -= f;
+		if (Math.abs(rot.angleLeft) <= 1e-3) {
+			rot = undefined;
+		}
+	}
+
 	renderer.render(scene, camera);
 };
 render();
