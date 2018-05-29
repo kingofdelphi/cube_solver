@@ -12,7 +12,66 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 const r = .5;
 const geometry = new three.BoxGeometry(r, r, r);
-const material = new three.MeshLambertMaterial({color: 0xfffff});
+geometry.colorsNeedUpdate = true;
+
+const cubeMaterials = [ 
+    new three.MeshLambertMaterial({color:0xff0000, side: three.DoubleSide}),
+    new three.MeshLambertMaterial({color:0x00ff00, side: three.DoubleSide}), 
+    new three.MeshLambertMaterial({color:0x0000ff, side: three.DoubleSide}),
+    new three.MeshLambertMaterial({color:0xffffff, side: three.DoubleSide}), 
+    new three.MeshLambertMaterial({color:0x000000, side: three.DoubleSide}), 
+    new three.MeshLambertMaterial({color:0x00ffff, side: three.DoubleSide}), 
+]; 
+
+let config = {
+	right: 0,
+	left: 1,
+	top: 2,
+	bottom: 3,
+	front: 4,
+	back: 5
+};
+
+const rotateCube = (config, type, dir) => {
+	if (type === 'z') {
+		let d = [config.right, config.top, config.left, config.bottom];
+		if (dir === 1) { //rotate left
+			const last = d.pop();
+			d = [last].concat(d);
+		} else {
+			const first = d.shift();
+			d.push(first);
+		}
+		return Object.assign({}, config,
+			{
+				right: d[0],
+				top: d[1],
+				left: d[2],
+				bottom: d[3],
+			}
+		);
+	}
+	if (type === 'x') {
+		let d = [config.front, config.top, config.back, config.bottom];
+		if (dir === -1) { //rotate forward
+			const last = d.pop();
+			d = [last].concat(d);
+		} else {
+			const first = d.shift();
+			d.push(first);
+		}
+		return Object.assign({}, config,
+			{
+				front: d[0],
+				top: d[1],
+				back: d[2],
+				bottom: d[3],
+			}
+		);
+	}
+	return config;
+};
+const material = new three.MeshFaceMaterial(cubeMaterials);
 const cube = new three.Mesh(geometry, material);
 
 cube.position.y = r * 0.5;
@@ -78,6 +137,7 @@ function render() {
 	if (keys['a']) {
 		if (!rot && player.x > 0) {
 			keys['a'] = false;
+			config = rotateCube(config, 'z', 1);
 			rot = rotation(1, 'z');
 			player.x = Math.max(0, player.x - 1);
 		}
@@ -85,6 +145,7 @@ function render() {
 	if (keys['d']) {
 		if (!rot && player.x < size - 1) {
 			keys['d'] = false;
+			config = rotateCube(config, 'z', -1);
 			rot = rotation(-1, 'z');
 			player.x = Math.min(size - 1, player.x + 1);
 		}
@@ -93,6 +154,7 @@ function render() {
 		if (!rot && player.z > 0) {
 			keys['s'] = false;
 			rot = rotation(1, 'x');
+			config = rotateCube(config, 'x', 1);
 			player.z = Math.max(0, player.z - 1);
 		}
 	}
@@ -100,8 +162,12 @@ function render() {
 		if (!rot && player.z < size - 1) {
 			keys['w'] = false;
 			rot = rotation(-1, 'x');
+			config = rotateCube(config, 'x', -1);
 			player.z = Math.min(size - 1, player.z + 1);
 		}
+	}
+	if (keys['c']) {
+		cubeMaterials[config.bottom].color.setHex(0xFFFFFF);
 	}
 	let factor = 1 / 6;
 	if (rot) {
