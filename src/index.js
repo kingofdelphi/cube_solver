@@ -1,4 +1,3 @@
-
 import keys from './keys';
 
 import './styles.css';
@@ -180,10 +179,9 @@ const [cube, cubeMaterials] = prepareCube();
 const planes = preparePlane();
 const placed = placeColors();
 const floorMap = [];
-const cubeMap = [];
+const cubeMap = [false, false, false, false, false, false];
 for (let i = 0; i < size; i += 1) {
 	floorMap[i] = [];
-	cubeMap.push(false);
 	for (let j = 0; j < size; j += 1) {
 		floorMap[i][j] = false;
 	}
