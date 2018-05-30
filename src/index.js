@@ -2,6 +2,7 @@ import keys from './keys';
 
 import './styles.css';
 import * as three from 'three';
+import Solver from './solver';
 import { Cube, rotateCube } from './cube';
 
 const scene = new three.Scene();
@@ -31,9 +32,9 @@ const prepareCube = () => {
 	return [cube, cubeMaterials];
 };
 
-const size = 4;
+const gridSize = 4;
 
-const center = r * (size - 1) / 2;
+const center = r * (gridSize - 1) / 2;
 
 const getCellColor = (i, j) => {
 	return (i + j) % 2 ? 0xaaaaaa : 0xffffff;
@@ -41,9 +42,9 @@ const getCellColor = (i, j) => {
 
 const preparePlane = () => {
 	const planes = [];
-	for (let i = 0; i < size; i += 1) {
+	for (let i = 0; i < gridSize; i += 1) {
 		planes.push([]);
-		for (let j = 0; j < size; j += 1) {
+		for (let j = 0; j < gridSize; j += 1) {
 			const geometry = new three.PlaneGeometry(r, r);
 			const material = new three.MeshLambertMaterial({color: getCellColor(i, j), side: three.DoubleSide});
 			const plane = new three.Mesh(geometry, material);
@@ -57,8 +58,8 @@ const preparePlane = () => {
 
 const placeColors = () => {
 	const f = [];
-	for (let i = 0; i < size; i += 1) {
-		for (let j = 0; j < size; j += 1) {
+	for (let i = 0; i < gridSize; i += 1) {
+		for (let j = 0; j < gridSize; j += 1) {
 			f.push({ i, j });
 		}
 	}
@@ -136,6 +137,11 @@ function render() {
 			player.rotate('x', -1);
 		}
 	}
+	if (keys['c']) {
+		const solver = new Solver(gridSize);
+		solver.solve(player.state, cubeMap, floorMap);
+		keys['c'] = false;
+	}
 	let factor = 1 / 6;
 	const { rotation } = player;
 	if (rotation) {
@@ -178,9 +184,9 @@ const planes = preparePlane();
 const placed = [{i: 1, j: 1}];
 const floorMap = [];
 const cubeMap = [false, false, false, false, false, false];
-for (let i = 0; i < size; i += 1) {
+for (let i = 0; i < gridSize; i += 1) {
 	floorMap[i] = [];
-	for (let j = 0; j < size; j += 1) {
+	for (let j = 0; j < gridSize; j += 1) {
 		floorMap[i][j] = false;
 	}
 }
@@ -190,6 +196,6 @@ placed.forEach(pos => {
 	planes[pos.i][pos.j].material.color.setHex(pickColor);
 });
 
-const player = new Cube(cube, size, r);
+const player = new Cube(cube, gridSize, r);
 prepareScene();
 render();
