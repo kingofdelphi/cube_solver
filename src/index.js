@@ -181,7 +181,7 @@ const [cube, cubeMaterials] = prepareCube();
 
 const planes = preparePlane();
 //const placed = placeColors();
-const placed = [{i: 1, j: 1}];
+const placed = [{i: 3, j: 1}];
 const floorMap = [];
 const cubeMap = [false, false, false, false, false, false];
 for (let i = 0; i < gridSize; i += 1) {
