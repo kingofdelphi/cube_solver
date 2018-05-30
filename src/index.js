@@ -16,20 +16,16 @@ const r = .5;
 const defaultCubeColor = 0xfffff;
 const pickColor = 0x00ff00;
 
-const prepareCube = () => {
-	const cubeMaterials = [ 
-		new three.MeshLambertMaterial({color: defaultCubeColor, transparent: true, opacity: 0.9, side: three.DoubleSide}),
-		new three.MeshLambertMaterial({color: defaultCubeColor, transparent: true, opacity: 0.9, side: three.DoubleSide}), 
-		new three.MeshLambertMaterial({color: defaultCubeColor, transparent: true, opacity: 0.9, side: three.DoubleSide}),
-		new three.MeshLambertMaterial({color: defaultCubeColor, transparent: true, opacity: 0.9, side: three.DoubleSide}), 
-		new three.MeshLambertMaterial({color: defaultCubeColor, transparent: true, opacity: 0.9, side: three.DoubleSide}), 
-		new three.MeshLambertMaterial({color: defaultCubeColor, transparent: true, opacity: 0.9, side: three.DoubleSide}), 
-	]; 
+const prepareCube = (cubeMap) => {
+	const cubeMaterials = cubeMap.map(colored => {
+		const color = colored ? pickColor : defaultCubeColor;
+		return new three.MeshLambertMaterial({color, transparent: true, opacity: 0.9, side: three.DoubleSide});
+	});
 	const material = new three.MeshFaceMaterial(cubeMaterials);
 	const geometry = new three.BoxGeometry(r, r, r);
 	const cube = new three.Mesh(geometry, material);
 	cube.position.y = r * 0.5;
-	return [cube, cubeMaterials];
+	return cube;
 };
 
 const gridSize = 4;
@@ -142,6 +138,7 @@ function render() {
 		solver.solve(player.state, cubeMap, floorMap);
 		keys['c'] = false;
 	}
+	// return;
 	let factor = 1 / 6;
 	const { rotation } = player;
 	if (rotation) {
@@ -162,7 +159,7 @@ function render() {
 					floorMap[position.x][position.z] ? 
 					[pickColor, getCellColor(position.x, position.z)] : 
 					[defaultCubeColor, pickColor];
-				cubeMaterials[config.bottom].color.setHex(cubeColor);
+				cube.material[config.bottom].color.setHex(cubeColor);
 				planes[position.x][position.z].material.color.setHex(planeColor);
 				cubeMap[config.bottom] = cubeColor === pickColor;
 				floorMap[position.x][position.z] = planeColor === pickColor;
@@ -177,13 +174,14 @@ function render() {
 	renderer.render(scene, camera);
 };
 
-const [cube, cubeMaterials] = prepareCube();
-
 const planes = preparePlane();
 //const placed = placeColors();
 const placed = [{i: 3, j: 1}];
 const floorMap = [];
-const cubeMap = [false, false, false, false, false, false];
+// const cubeMap = [false, false, false, false, false, false];
+const cubeMap = [true, true, true, true, true, false];
+const cube = prepareCube(cubeMap);
+
 for (let i = 0; i < gridSize; i += 1) {
 	floorMap[i] = [];
 	for (let j = 0; j < gridSize; j += 1) {

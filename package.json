@@ -28,6 +28,7 @@
   },
   "repository": "https://bitbucket.org/kingofdelphi/live-trading",
   "dependencies": {
+    "buckets-js": "^1.98.2",
     "three": "^0.92.0"
   }
 }
