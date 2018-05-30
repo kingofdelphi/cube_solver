@@ -80,7 +80,7 @@ const prepareCamera = () => {
 	vector.applyAxisAngle(axis, angle);
 
 	//slanted top view
-	camera.position.set(center, 3, 1.5);        
+	camera.position.set(0, 2, 1.5);        
 	camera.up = new three.Vector3(1,0,0).cross(vector);
 	camera.lookAt(vector.add(camera.position));
 
@@ -136,9 +136,6 @@ function render() {
 			player.rotate('x', -1);
 		}
 	}
-	if (keys['c']) {
-		cubeMaterials[player.config.bottom].color.setHex(0xFFFFF);
-	}
 	let factor = 1 / 6;
 	const { rotation } = player;
 	if (rotation) {
@@ -151,17 +148,17 @@ function render() {
 			if (keys['w'] && rotation.angleLeft < 0) factor = 1 / 2; 
 		}
 		player.update(factor);
-		const { position } = player;
+		const { position, config } = player.state;
 		if (!player.rotation) {
 			//transfer color
-			if (!allPicked && cubeMap[player.config.bottom] ^ floorMap[position.x][position.z]) {
+			if (!allPicked && cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
 				const [cubeColor, planeColor] = 
 					floorMap[position.x][position.z] ? 
 					[pickColor, getCellColor(position.x, position.z)] : 
 					[defaultCubeColor, pickColor];
-				cubeMaterials[player.config.bottom].color.setHex(cubeColor);
+				cubeMaterials[config.bottom].color.setHex(cubeColor);
 				planes[position.x][position.z].material.color.setHex(planeColor);
-				cubeMap[player.config.bottom] = cubeColor === pickColor;
+				cubeMap[config.bottom] = cubeColor === pickColor;
 				floorMap[position.x][position.z] = planeColor === pickColor;
 
 				if (cubeColor === pickColor) {
@@ -177,7 +174,8 @@ function render() {
 const [cube, cubeMaterials] = prepareCube();
 
 const planes = preparePlane();
-const placed = placeColors();
+//const placed = placeColors();
+const placed = [{i: 1, j: 1}];
 const floorMap = [];
 const cubeMap = [false, false, false, false, false, false];
 for (let i = 0; i < size; i += 1) {
