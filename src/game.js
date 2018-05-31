@@ -68,7 +68,7 @@ const preparePlane = (gameConfig, floorMap) => {
 class Game {
 	constructor(config) {
 		this.config = config;
-		//const placed = [{i: 3, j: 0}, {i: 3, j: 1}, {i: 3, j: 2}, {i: 1, j: 1}, {i: 1, j: 2}, {i: 0, j: 3}];
+		//const placed = [{i: 2, j: 3}, {i: 3, j: 1}, {i: 0, j: 2}, {i: 0, j: 3}, {i: 1, j: 0}, {i: 1, j: 1}];
 		//this.cubeMap = [true, true, true, true, true, false];
 		this.cubeMap = [false, false, false, false, false, false];
 		const placed = placeColors(config.gridSize);

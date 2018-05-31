@@ -55,6 +55,7 @@ const prepareScene = () => {
 };
 
 let allPicked = false;
+let solverMode = false;
 let moveList = [];
 function render() {
 	requestAnimationFrame(render);
@@ -84,18 +85,26 @@ function render() {
 		}
 	}
 	debugger;
-	if (keys['c'] && moveList.length === 0 && !allPicked) {
+	if (keys['c'] && !solverMode && player.isStatic()) {
 		const { config, position } = player.state;
 		// always pick the initial position bottom while solving
 		if (cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
 			game.setCubeBottom(true);
 			game.setFloor(position.x, position.z, false);
 		}
-		const solver = new Solver(gameConfig.gridSize);
-		const moves = solver.solve(player.state, cubeMap, floorMap);
-		console.log(moves);
-		moveList = moves;
-		keys['c'] = false;
+		solverMode = true;
+		//const solver = new Solver(gameConfig.gridSize);
+		//const moves = solver.solve(player.state, cubeMap, floorMap);
+		//console.log(moves);
+		//moveList = moves;
+	}
+	if (solverMode) {
+		if (!allPicked && moveList.length === 0 && player.isStatic()) {
+			const solver = new Solver(gameConfig.gridSize);
+			const moves = solver.solve(player.state, cubeMap, floorMap);
+			console.log(moves);
+			moveList = moves;
+		}
 	}
 	// return;
 	let factor = 1 / 6;

@@ -44,8 +44,11 @@ class Solver {
 				while (1) {
 					const par = predecessor[cur];
 					if (!par) break;
-					moves.push(par.move);
 					const curs = JSON.parse(par.parentStateStr);
+					// last step, do not return to current cell if already picked step before
+					if (moves.length > 0 || curs.willPick) {
+						moves.push(par.move);
+					}
 					if (!curs.willPick) {
 						moves.push(Object.assign({}, par.move, { dir: -par.move.dir }));
 						moves.push(Object.assign({}, par.move, { dir: par.move.dir }));
