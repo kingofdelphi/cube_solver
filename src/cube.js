@@ -37,6 +37,10 @@ class Cube {
 		this.state = rotateState(this.state, type, dir);
 	}
 
+	isStatic() {
+		return typeof this.rotation === 'undefined';
+	}
+
 	update(factor) {
 		const { rotation } = this;
 		const f = rotation.angleLeft * factor;

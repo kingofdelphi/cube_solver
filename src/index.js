@@ -3,7 +3,7 @@ import keys from './keys';
 import './styles.css';
 import * as three from 'three';
 import Solver from './solver';
-import { Cube, rotateCube } from './cube';
+import Game from './game';
 
 const scene = new three.Scene();
 const camera = new three.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
@@ -11,62 +11,10 @@ const renderer = new three.WebGLRenderer({ alpha: true, antialias: true });
 renderer.setClearColor(0x0000ff, 0.2);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-const r = .5;
 
-const defaultCubeColor = 0xfffff;
-const pickColor = 0x00ff00;
+const gameConfig = { r: 0.5, gridSize: 4 };
 
-const prepareCube = (cubeMap) => {
-	const cubeMaterials = cubeMap.map(colored => {
-		const color = colored ? pickColor : defaultCubeColor;
-		return new three.MeshLambertMaterial({color, transparent: true, opacity: 0.9, side: three.DoubleSide});
-	});
-	const material = new three.MeshFaceMaterial(cubeMaterials);
-	const geometry = new three.BoxGeometry(r, r, r);
-	const cube = new three.Mesh(geometry, material);
-	cube.position.y = r * 0.5;
-	return cube;
-};
-
-const gridSize = 4;
-
-const center = r * (gridSize - 1) / 2;
-
-const getCellColor = (i, j) => {
-	return (i + j) % 2 ? 0xaaaaaa : 0xffffff;
-};
-
-const preparePlane = () => {
-	const planes = [];
-	for (let i = 0; i < gridSize; i += 1) {
-		planes.push([]);
-		for (let j = 0; j < gridSize; j += 1) {
-			const geometry = new three.PlaneGeometry(r, r);
-			const material = new three.MeshLambertMaterial({color: getCellColor(i, j), side: three.DoubleSide});
-			const plane = new three.Mesh(geometry, material);
-			plane.position.set(i * r, 0, -j * r);
-			plane.rotation.x = Math.PI / 2;
-			planes[i].push(plane);
-		}
-	}
-	return planes;
-};
-
-const placeColors = () => {
-	const f = [];
-	for (let i = 0; i < gridSize; i += 1) {
-		for (let j = 0; j < gridSize; j += 1) {
-			f.push({ i, j });
-		}
-	}
-	for (let i = 0; i < f.length; i += 1) {
-		const id = Math.floor(Math.random() * f.length);
-		const tmp = f[id];
-		f[id] = f[0];
-		f[0] = tmp;
-	}
-	return f.slice(0, 6);
-};
+const center = gameConfig.r * (gameConfig.gridSize - 1) / 2;
 
 const prepareCamera = () => {
 	const vector = new three.Vector3(0, 0, -1);
@@ -95,10 +43,10 @@ const prepareScene = () => {
 	scene.add(ambiance);
 
 	// cube
-	scene.add(cube);
+	scene.add(game.elements.cube);
 
 	// planes
-	planes.forEach(d => {
+	game.elements.planes.forEach(d => {
 		d.forEach(plane => scene.add(plane));
 	});
 
@@ -107,8 +55,10 @@ const prepareScene = () => {
 };
 
 let allPicked = false;
+let moveList = [];
 function render() {
 	requestAnimationFrame(render);
+	const { player, cubeMap, floorMap } = game;
 	if (keys['a']) {
 		if (player.canRotate('z', 1)) {
 			keys['a'] = false;
@@ -133,15 +83,24 @@ function render() {
 			player.rotate('x', -1);
 		}
 	}
-	if (keys['c']) {
-		const solver = new Solver(gridSize);
-		solver.solve(player.state, cubeMap, floorMap);
+	debugger;
+	if (keys['c'] && moveList.length === 0 && !allPicked) {
+		const { config, position } = player.state;
+		// always pick the initial position bottom while solving
+		if (cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
+			game.setCubeBottom(true);
+			game.setFloor(position.x, position.z, false);
+		}
+		const solver = new Solver(gameConfig.gridSize);
+		const moves = solver.solve(player.state, cubeMap, floorMap);
+		console.log(moves);
+		moveList = moves;
 		keys['c'] = false;
 	}
 	// return;
 	let factor = 1 / 6;
-	const { rotation } = player;
-	if (rotation) {
+	if (!player.isStatic()) {
+		const { rotation } = player;
 		if (rotation.type === 'z') {
 			if (keys['a'] && rotation.angleLeft > 0) factor = 1 / 2; 
 			if (keys['d'] && rotation.angleLeft < 0) factor = 1 / 2; 
@@ -152,48 +111,25 @@ function render() {
 		}
 		player.update(factor);
 		const { position, config } = player.state;
-		if (!player.rotation) {
+		if (player.isStatic()) {
 			//transfer color
 			if (!allPicked && cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
-				const [cubeColor, planeColor] = 
-					floorMap[position.x][position.z] ? 
-					[pickColor, getCellColor(position.x, position.z)] : 
-					[defaultCubeColor, pickColor];
-				cube.material[config.bottom].color.setHex(cubeColor);
-				planes[position.x][position.z].material.color.setHex(planeColor);
-				cubeMap[config.bottom] = cubeColor === pickColor;
-				floorMap[position.x][position.z] = planeColor === pickColor;
-
-				if (cubeColor === pickColor) {
+				const pick = floorMap[position.x][position.z];
+				game.setFloor(position.x, position.z, !pick);
+				game.setCubeBottom(pick);
+				if (pick) {
 					allPicked = cubeMap.every(d => d);
 				}
 			}
 		}
+	} else if (moveList.length > 0) {
+		const move = moveList.shift();
+		player.rotate(move.type, move.dir);
 	}
 
 	renderer.render(scene, camera);
 };
 
-const planes = preparePlane();
-//const placed = placeColors();
-const placed = [{i: 3, j: 1}];
-const floorMap = [];
-// const cubeMap = [false, false, false, false, false, false];
-const cubeMap = [true, true, true, true, true, false];
-const cube = prepareCube(cubeMap);
-
-for (let i = 0; i < gridSize; i += 1) {
-	floorMap[i] = [];
-	for (let j = 0; j < gridSize; j += 1) {
-		floorMap[i][j] = false;
-	}
-}
-
-placed.forEach(pos => {
-	floorMap[pos.i][pos.j] = true;
-	planes[pos.i][pos.j].material.color.setHex(pickColor);
-});
-
-const player = new Cube(cube, gridSize, r);
+const game = new Game(gameConfig);
 prepareScene();
 render();

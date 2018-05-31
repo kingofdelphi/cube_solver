@@ -22,9 +22,10 @@ class Solver {
 	// given cubeMap and floorMap, fill the next empty face of cube(if it exists)
 	solve(state, cubeMap, floorMap) {
 		const S = state => JSON.stringify(state);
-		const distance = {[S(state)]: 0};
+		const ns = Object.assign({}, state, { willPick: true });
+		const distance = {[S(ns)]: 0};
 		const q = new buckets.PriorityQueue((a, b) => -distance[a] + distance[b]);
-		q.add(S(state));
+		q.add(S(ns));
 		const visited = {};
 		const predecessor = {};
 		let found = false;
@@ -44,17 +45,28 @@ class Solver {
 					const par = predecessor[cur];
 					if (!par) break;
 					moves.push(par.move);
+					const curs = JSON.parse(par.parentStateStr);
+					if (!curs.willPick) {
+						moves.push(Object.assign({}, par.move, { dir: -par.move.dir }));
+						moves.push(Object.assign({}, par.move, { dir: par.move.dir }));
+					}
 					cur = par.parentStateStr;
 				}
-				console.log(moves.reverse());
-				break;
+				return moves.reverse();
 			} else {
 				this.enumerateMoves(curstate).forEach(move => {
 					const st = rotateState(curstate, move.type, move.dir);
+					//if cube bottom has color and floor doesn't extra 2 steps needed
+					const newCost = dist + 1 + (curstate.willPick ? 0 : 2);
+					let nxtWillPick;
+					if (curstate.willPick) {
+						nxtWillPick = floorMap[st.position.x][st.position.z] || !cubeMap[st.config.bottom];
+					} else {
+						nxtWillPick = true;
+					}
+					Object.assign(st, { willPick: nxtWillPick });
 					const ms = S(st);
 					const oldCost = distance[ms];
-					//if cube bottom has color and floor doesn't extra 2 steps needed
-					const newCost = dist + 1 + 2 * (floorMap[position.x][position.z] ^ cubeMap[curstate.config.bottom] ? 1 : 0);
 					if (typeof oldCost === 'undefined' || oldCost > newCost) {
 						distance[ms] = newCost;
 						q.add(ms);
