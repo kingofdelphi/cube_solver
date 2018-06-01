@@ -23,13 +23,16 @@ module.exports = {
     module: {
         loaders: [
             {
-                test: /\.css$/,
+                test: /\.scss$/,
                 use: [
                     {
                         loader: 'style-loader'
                     },
                     {
                         loader: 'css-loader'
+                    },
+                    {
+                        loader: 'sass-loader'
                     }
                 ],
                 exclude: /node_modules/

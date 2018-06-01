@@ -1,6 +1,6 @@
 import keys from './keys';
 
-import './styles.css';
+import './styles.scss';
 import * as three from 'three';
 import Solver from './solver';
 import Game from './game';

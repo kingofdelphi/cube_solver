@@ -1,0 +1,113 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.main {
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.header {
+	padding: 5px;
+	display: flex;
+	justify-content: center;
+	background: silver;
+	> *:not(:first-child) {
+		margin-left: 20px;
+	}
+}
+
+$hover-color: white;
+
+#solve {
+	padding: 15px;
+	border: none;
+	outline: 0;
+	background: #dddddd;
+	cursor: pointer;
+	align-self: center;
+	&:hover {
+		background: $hover-color;
+	}
+}
+
+.arrows {
+	display: grid;
+	grid-template-areas: 
+	". u ."
+	"l . r"
+	". d .";
+	button {
+		padding: 2px;
+		border: none;
+		background: none;
+		outline: none;
+		font-size: 20px;
+		cursor: pointer;
+		&:hover {
+			color: white;
+		}
+		img {
+			width: 16px;
+		}
+	}
+}
+
+$width: 10px;
+@mixin triangles {
+	width: 0; 
+	height: 0; 
+	border: $width solid transparent;
+	border-radius: 20%;
+}
+
+.arrows > button > div {
+	@include triangles;
+}
+
+#left {
+	grid-area: l;
+	> div {
+		border-right: $width solid black;
+		&:hover {
+			border-right-color: $hover-color;
+		}
+	}
+}
+
+#right {
+	grid-area: r;
+	> div {
+		border-left: $width solid black;
+		&:hover {
+			border-left-color: $hover-color;
+		}
+	}
+}
+
+#up {
+	grid-area: u;
+	> div {
+		border-bottom: $width solid black;
+		&:hover {
+			border-bottom-color: $hover-color;
+		}
+	}
+}
+
+#down {
+	grid-area: d;
+	> div {
+		border-top: $width solid black;
+		&:hover {
+			border-top-color: $hover-color;
+		}
+	}
+}
+
+#body {
+	flex: 1;
+}
