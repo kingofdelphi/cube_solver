@@ -30,7 +30,6 @@ class Solver {
 		const predecessor = {};
 		let found = false;
 		while (!found && !q.isEmpty()) {
-			debugger;
 			const s = q.dequeue();
 			if (visited[s]) continue;
 			visited[s] = true;
