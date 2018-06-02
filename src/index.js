@@ -2,7 +2,6 @@ import keys from './keys';
 
 import './styles.scss';
 import * as three from 'three';
-import Solver from './solver';
 import Game from './game';
 
 const scene = new three.Scene();
@@ -10,68 +9,73 @@ const camera = new three.PerspectiveCamera(75, window.innerWidth/window.innerHei
 const renderer = new three.WebGLRenderer({ alpha: true, antialias: true });
 renderer.setClearColor(0x0000ff, 0.2);
 
-const body = document.getElementById('body');
+const id = (name) => document.getElementById(name);
+const body = id('body');
 body.appendChild(renderer.domElement);
-renderer.setSize(body.offsetWidth, body.offsetHeight);
+
+const resize = () => renderer.setSize(body.offsetWidth, body.offsetHeight);
+resize();
+
+window.addEventListener('resize', function() {
+	resize();
+});
 
 const form = {
-	solve: document.getElementById('solve'),
+	solve: id('solve'),
+	reset: id('reset'),
+	floorSize: id('floor-size'),
+	gridSize: id('grid-size'),
 	arrows: {
-		left: document.getElementById('left'),
-		right: document.getElementById('right'),
-		up: document.getElementById('up'),
-		down: document.getElementById('down'),
+		left: id('left'),
+		right: id('right'),
+		up: id('up'),
+		down: id('down'),
 	}
 }
 
-const setSolverMode = () => {
-	const { player, cubeMap, floorMap } = game;
-	const { config, position } = player.state;
-	if (solverMode || !player.isStatic()) {
-		return false;
-	}
-	// always pick the initial position bottom while solving
-	if (cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
-		game.setCubeBottom(true);
-		game.setFloor(position.x, position.z, false);
-	}
-	solverMode = true;
-	return true;
-};
+const gameConfig = { r: form.floorSize.valueAsNumber, gridSize: form.gridSize.valueAsNumber};
 
 const addListeners = () => {
-	form.solve.addEventListener('click', function() {
-		if (allPicked) {
+	form.solve.addEventListener('mousedown', function() {
+		if (game.allPicked) {
 			alert('already solved');
 		} else {
-			setSolverMode();
+			game.setSolverMode();
 		}
+	});
+	form.floorSize.addEventListener('change', function(d) {
+		if (d.target.valueAsNumber) {
+			gameConfig.r = d.target.valueAsNumber;
+		}
+	});
+	form.gridSize.addEventListener('change', function(d) {
+		if (d.target.valueAsNumber) {
+			gameConfig.gridSize = d.target.valueAsNumber;
+		}
+	});
+	form.reset.addEventListener('mousedown', function() {
+		initNewGame();
 	});
 	const helper = (type, dir) => {
-		const { player } = game;
-		if (player.canRotate(type, dir)) {
-			player.rotate(type, dir);
-		}
+		game.addToMoveList(type, dir);
 	}
-	form.arrows.left.addEventListener('click', function() {
+	form.arrows.left.addEventListener('mousedown', function() {
 		helper('z', 1);
 	});
-	form.arrows.right.addEventListener('click', function() {
+	form.arrows.right.addEventListener('mousedown', function() {
 		helper('z', -1);
 	});
-	form.arrows.up.addEventListener('click', function() {
+	form.arrows.up.addEventListener('mousedown', function() {
 		helper('x', -1);
 	});
-	form.arrows.down.addEventListener('click', function() {
+	form.arrows.down.addEventListener('mousedown', function() {
 		helper('x', 1);
 	});
 };
 
-const gameConfig = { r: 0.5, gridSize: 4 };
-
-const center = gameConfig.r * (gameConfig.gridSize - 1) / 2;
-
+const center = () => gameConfig.r * (gameConfig.gridSize - 1) / 2;
 const prepareCamera = () => {
+
 	const vector = new three.Vector3(0, 0, -1);
 
 	const axis = new three.Vector3(1, 0, 0);
@@ -80,7 +84,7 @@ const prepareCamera = () => {
 	vector.applyAxisAngle(axis, angle);
 
 	//slanted top view
-	camera.position.set(center, 2, 1.5);        
+	camera.position.set(center(), 2, 1.5);        
 	camera.up = new three.Vector3(1,0,0).cross(vector);
 	camera.lookAt(vector.add(camera.position));
 
@@ -90,10 +94,15 @@ const prepareCamera = () => {
 };
 
 const prepareScene = () => {
+	//clear scene first
+	while (scene.children.length > 0){ 
+		scene.remove(scene.children[0]); 
+	}
+	
 	// scene setup
 	const light = new three.PointLight(0xffffff, 1);
-	light.position.set(center, center, 1);
-	scene.add( light );
+	light.position.set(center(), center(), 1);
+	scene.add(light);
 	const ambiance = new three.AmbientLight(0x404040); // soft white light
 	scene.add(ambiance);
 
@@ -109,83 +118,42 @@ const prepareScene = () => {
 	prepareCamera();
 };
 
-let allPicked = false;
-let solverMode = false;
-let moveList = [];
+let game;
+const initNewGame = () => {
+	game = new Game(gameConfig);
+	prepareScene();
+};
+
+initNewGame();
+addListeners();
+
 function render() {
 	requestAnimationFrame(render);
-	const { player, cubeMap, floorMap } = game;
 	if (keys['a']) {
-		if (player.canRotate('z', 1)) {
-			keys['a'] = false;
-			player.rotate('z', 1);
-		}
+		keys['a'] = false;
+		game.addToMoveList('z', 1);
 	}
 	if (keys['d']) {
-		if (player.canRotate('z', -1)) {
-			keys['d'] = false;
-			player.rotate('z', -1);
-		}
+		keys['d'] = false;
+		game.addToMoveList('z', -1);
 	}
 	if (keys['s']) {
-		if (player.canRotate('x', 1)) {
-			keys['s'] = false;
-			player.rotate('x', 1);
-		}
+		keys['s'] = false;
+		game.addToMoveList('x', 1);
 	}
 	if (keys['w']) {
-		if (player.canRotate('x', -1)) {
-			keys['w'] = false;
-			player.rotate('x', -1);
-		}
+		keys['w'] = false;
+		game.addToMoveList('x', -1);
 	}
 	if (keys['c']) {
-		const success = setSolverMode();
-		if (!success) console.log('wait');
-	}
-	if (solverMode) {
-		if (!allPicked && moveList.length === 0 && player.isStatic()) {
-			const solver = new Solver(gameConfig.gridSize);
-			const moves = solver.solve(player.state, cubeMap, floorMap);
-			console.log(moves);
-			moveList = moves;
+		keys['c'] = false;
+		const success = game.setSolverMode();
+		if (!success) {
+			alert('please wait');
 		}
 	}
-	// return;
-	let factor = 1 / 6;
-	if (!player.isStatic()) {
-		const { rotation } = player;
-		if (rotation.type === 'z') {
-			if (keys['a'] && rotation.angleLeft > 0) factor = 1 / 2; 
-			if (keys['d'] && rotation.angleLeft < 0) factor = 1 / 2; 
-		}
-		if (rotation.type === 'x') {
-			if (keys['s'] && rotation.angleLeft > 0) factor = 1 / 2; 
-			if (keys['w'] && rotation.angleLeft < 0) factor = 1 / 2; 
-		}
-		player.update(factor);
-		const { position, config } = player.state;
-		if (player.isStatic()) {
-			//transfer color
-			if (!allPicked && cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
-				const pick = floorMap[position.x][position.z];
-				game.setFloor(position.x, position.z, !pick);
-				game.setCubeBottom(pick);
-				if (pick) {
-					allPicked = cubeMap.every(d => d);
-				}
-			}
-		}
-	} else if (moveList.length > 0) {
-		const move = moveList.shift();
-		player.rotate(move.type, move.dir);
-	}
-
+	game.update();
 	renderer.render(scene, camera);
 };
 
-addListeners();
-
-const game = new Game(gameConfig);
-prepareScene();
 render();

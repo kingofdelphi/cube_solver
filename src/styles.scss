@@ -1,5 +1,8 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+
 * {
     margin: 0;
+	font-family: 'Open Sans';
     padding: 0;
 }
 
@@ -14,23 +17,59 @@
 	padding: 5px;
 	display: flex;
 	justify-content: center;
-	background: silver;
+	background: skyblue;
 	> *:not(:first-child) {
 		margin-left: 20px;
 	}
+	> * {
+		align-self: center;
+	}
+}
+
+.note {
+	font-size: 15px;
+	strong {
+		font-size: 25px;
+	}
+	max-width: 30vw;
+	padding: 5px;
 }
 
 $hover-color: white;
+$default-arrow-color: rgba(black, 0.5);
 
-#solve {
-	padding: 15px;
-	border: none;
-	outline: 0;
-	background: #dddddd;
-	cursor: pointer;
-	align-self: center;
-	&:hover {
-		background: $hover-color;
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-around;
+	label {
+		font-weight: bold;
+		text-transform: uppercase;
+	}
+
+	> div {
+		padding: 4px 10px;
+		text-align: center;
+		> * {
+			margin: 5px;
+		}
+	}
+	#grid-size {
+		width: 40px;
+		padding: 5px;
+		border: none;
+	}
+	button {
+		font-weight: bold;
+		padding: 15px;
+		border: none;
+		outline: 0;
+		background: #dddddd;
+		cursor: pointer;
+		&:hover {
+			background: $hover-color;
+		}
 	}
 }
 
@@ -71,7 +110,7 @@ $width: 10px;
 #left {
 	grid-area: l;
 	> div {
-		border-right: $width solid black;
+		border-right: $width solid $default-arrow-color;
 		&:hover {
 			border-right-color: $hover-color;
 		}
@@ -81,7 +120,7 @@ $width: 10px;
 #right {
 	grid-area: r;
 	> div {
-		border-left: $width solid black;
+		border-left: $width solid $default-arrow-color;
 		&:hover {
 			border-left-color: $hover-color;
 		}
@@ -91,7 +130,7 @@ $width: 10px;
 #up {
 	grid-area: u;
 	> div {
-		border-bottom: $width solid black;
+		border-bottom: $width solid $default-arrow-color;
 		&:hover {
 			border-bottom-color: $hover-color;
 		}
@@ -101,7 +140,7 @@ $width: 10px;
 #down {
 	grid-area: d;
 	> div {
-		border-top: $width solid black;
+		border-top: $width solid $default-arrow-color;
 		&:hover {
 			border-top-color: $hover-color;
 		}
@@ -110,4 +149,5 @@ $width: 10px;
 
 #body {
 	flex: 1;
+	min-height: 0;
 }

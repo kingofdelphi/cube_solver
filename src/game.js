@@ -1,5 +1,6 @@
 import * as three from 'three';
 import { Cube } from './cube';
+import Solver from './solver';
 
 const defaultCubeColor = 0xfffff;
 const pickColor = 0x00ff00;
@@ -78,6 +79,8 @@ class Game {
 			planes: preparePlane(config, this.floorMap)
 		};
 		this.player = new Cube(this.elements.cube, config.gridSize, config.r); 
+		this.allPicked = this.cubeMap.every(d => d);
+		this.moveList = [];
 	}
 
 	getFloorMap(placed) {
@@ -94,6 +97,9 @@ class Game {
 		const { cube } = this.elements;
 		cubeMap[player.state.config.bottom] = colored;
 		cube.material[player.state.config.bottom].color.setHex(color);
+		if (colored) {
+			this.allPicked = cubeMap.every(d => d);
+		}
 	}
 
 	setFloor(x, z, colored) {
@@ -102,6 +108,57 @@ class Game {
 		floorMap[x][z] = colored;
 		const color = colored ? pickColor : getCellColor(x, z);
 		planes[x][z].material.color.setHex(color);
+	}
+
+	setSolverMode() {
+		const { player, cubeMap, floorMap } = this;
+		const { config, position } = player.state;
+		if (this.solverMode || !player.isStatic()) {
+			return false;
+		}
+		// always pick the initial position bottom while solving
+		if (cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
+			this.setCubeBottom(true);
+			this.setFloor(position.x, position.z, false);
+		}
+		this.solverMode = true;
+		return true;
+	}
+
+	addToMoveList(type, dir) {
+		this.moveList.push({ type, dir });
+	}
+
+	update() {
+		const { player, cubeMap, floorMap } = this;
+		if (this.solverMode) {
+			if (!this.allPicked && this.moveList.length === 0 && player.isStatic()) {
+				const solver = new Solver(this.config.gridSize);
+				const moves = solver.solve(player.state, cubeMap, floorMap);
+				this.moveList = moves;
+			}
+			if (this.allPicked) this.solverMode = false;
+		}
+		// return;
+		const factor = this.solverMode ? 1 / 6 : (this.moveList.length > 1 ? 1 / 2 : 1 / 6);
+		if (!player.isStatic()) {
+			player.update(factor);
+			const { position, config } = player.state;
+			if (player.isStatic()) {
+				//transfer color
+				if (!this.allPicked && cubeMap[config.bottom] ^ floorMap[position.x][position.z]) {
+					const pick = floorMap[position.x][position.z];
+					this.setFloor(position.x, position.z, !pick);
+					this.setCubeBottom(pick);
+				}
+			}
+		} else if (this.moveList.length > 0) {
+			const move = this.moveList.shift();
+			if (player.canRotate(move.type, move.dir)) {
+				player.rotate(move.type, move.dir);
+			}
+		}
+
 	}
 
 };

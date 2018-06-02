@@ -11,12 +11,27 @@
 	<body>
 		<div class='main'>
 			<div class='header'>
-				<button id='solve'>Solve</button>
+				<div class='note'><em><strong>WSAD</strong></em> keys for navigation
+					<br>
+					Press <strong>NEW</strong> to start game with new config
+				</div>
 				<div class='arrows'>
 					<button id='left'><div></div></button>
 					<button id='right'><div></div></button>
 					<button id='up'><div></div></button>
 					<button id='down'><div></div></button>
+				</div>
+				<div class='actions'>
+					<div>
+						<label>Floor Size</label><input id='floor-size' type='range' min=0.0001 max=1 step=0.001 value=0.5>
+					</div>
+					<div>
+						<label>Grid Size</label><input type="number" id='grid-size' min=3 value=6></button>
+					</div>
+					<div>
+						<button id='solve'>SOLVE</button>
+						<button id='reset'>NEW</button>
+					</div>
 				</div>
 			</div>
 			<div id='body'>
