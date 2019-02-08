@@ -33,7 +33,7 @@ const form = {
 	}
 }
 
-const gameConfig = { r: form.floorSize.valueAsNumber, gridSize: form.gridSize.valueAsNumber};
+let gameConfig = { r: form.floorSize.valueAsNumber, gridSize: form.gridSize.valueAsNumber};
 
 const addListeners = () => {
 	form.solve.addEventListener('mousedown', function() {
@@ -45,12 +45,12 @@ const addListeners = () => {
 	});
 	form.floorSize.addEventListener('change', function(d) {
 		if (d.target.valueAsNumber) {
-			gameConfig.r = d.target.valueAsNumber;
+			gameConfig = Object.assign({}, gameConfig, { r: d.target.valueAsNumber });
 		}
 	});
 	form.gridSize.addEventListener('change', function(d) {
 		if (d.target.valueAsNumber) {
-			gameConfig.gridSize = d.target.valueAsNumber;
+			gameConfig = Object.assign({}, gameConfig, { gridSize: d.target.valueAsNumber });
 		}
 	});
 	form.reset.addEventListener('mousedown', function() {
