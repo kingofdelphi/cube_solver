@@ -1,7 +1,6 @@
 const path = require('path');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
     template: './src/index.html',
@@ -21,7 +20,7 @@ module.exports = {
         __dirname: true,
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.scss$/,
                 use: [
@@ -66,5 +65,5 @@ module.exports = {
         },
         historyApiFallback: true,
     },
-    plugins: [HtmlWebpackPluginConfig, /* new UglifyJSPlugin() */ ]
+    plugins: [HtmlWebpackPluginConfig]
 };

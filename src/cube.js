@@ -54,6 +54,5 @@ class Cube {
 };
 
 export {
-	Cube,
-	rotateCube,
+	Cube
 };
