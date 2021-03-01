@@ -31,6 +31,6 @@
   },
   "dependencies": {
     "buckets-js": "^1.98.2",
-    "three": "^0.92.0"
+    "three": "^0.125.0"
   }
 }
